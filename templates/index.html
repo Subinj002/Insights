@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Warehouse Management System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-white">Warehouse Dashboard</h1>
+        <div class="text-sm text-gray-400" id="last-updated">
+            Last updated: <span id="update-time">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="metrics-grid">
+        <!-- Metrics will be loaded here -->
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="chart-container">
+            <h3 class="text-lg font-semibold text-white mb-4">Inventory Trends</h3>
+            <div id="inventory-chart"></div>
+        </div>
+        
+        <div class="chart-container">
+            <h3 class="text-lg font-semibold text-white mb-4">Order Status Distribution</h3>
+            <div id="order-chart"></div>
+        </div>
+        
+        <div class="chart-container">
+            <h3 class="text-lg font-semibold text-white mb-4">Location Utilization</h3>
+            <div id="location-chart"></div>
+        </div>
+        
+        <div class="chart-container">
+            <h3 class="text-lg font-semibold text-white mb-4">Performance Metrics</h3>
+            <div id="performance-chart"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadMetrics() {
+        try {
+            const response = await fetch('/api/metrics');
+            const data = await response.json();
+            
+            if (data.success) {
+                displayMetrics(data.data);
+            }
+        } catch (error) {
+            console.error('Error loading metrics:', error);
+        }
+    }
+
+    function displayMetrics(metrics) {
+        const metricsGrid = document.getElementById('metrics-grid');
+        
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0
+            }).format(value);
+        };
+
+        metricsGrid.innerHTML = `
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Total Orders</p>
+                        <p class="text-2xl font-bold text-white">${metrics.total_orders?.toLocaleString() || 'N/A'}</p>
+                    </div>
+                    <i class="fas fa-box text-blue-500 text-2xl"></i>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+                    <span class="text-green-500 text-sm">+12% from last month</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Orders Processed</p>
+                        <p class="text-2xl font-bold text-white">${metrics.orders_processed?.toLocaleString() || 'N/A'}</p>
+                    </div>
+                    <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-400">Processing Rate</span>
+                        <span class="text-green-500">${((metrics.orders_processed / metrics.total_orders) * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Inventory Value</p>
+                        <p class="text-2xl font-bold text-white">${formatCurrency(metrics.inventory_value || 0)}</p>
+                    </div>
+                    <i class="fas fa-dollar-sign text-yellow-500 text-2xl"></i>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+                    <span class="text-green-500 text-sm">+8.5% from last quarter</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Low Stock Items</p>
+                        <p class="text-2xl font-bold text-red-400">${metrics.low_stock_items || 0}</p>
+                    </div>
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                </div>
+                <div class="mt-4">
+                    <span class="text-red-400 text-sm">Requires immediate attention</span>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadCharts() {
+        const chartTypes = ['inventory_trends', 'order_status', 'location_utilization', 'performance_metrics'];
+        const chartDivs = ['inventory-chart', 'order-chart', 'location-chart', 'performance-chart'];
+
+        for (let i = 0; i < chartTypes.length; i++) {
+            try {
+                const response = await fetch(`/api/analytics/charts?type=${chartTypes[i]}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    Plotly.newPlot(chartDivs[i], data.data.data, data.data.layout, {responsive: true});
+                }
+            } catch (error) {
+                console.error(`Error loading ${chartTypes[i]} chart:`, error);
+            }
+        }
+    }
+
+    function refreshData() {
+        loadMetrics();
+        loadCharts();
+        document.getElementById('update-time').textContent = new Date().toLocaleString();
+    }
+
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshData();
+    });
+</script>
+{% endblock %}

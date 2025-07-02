@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Warehouse Management System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-white">Warehouse Dashboard</h1>
+        <button onclick="syncData()" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-sync-alt mr-2"></i>
+            Sync Data
+        </button>
+    </div>
+
+    <!-- Real-time Status -->
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h3 class="text-lg font-semibold text-white mb-4">System Status</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-gray-300">MS SQL Database: Connected</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-gray-300">C WMS Application: Online</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <span class="text-gray-300">Flask API: Running</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 class="text-lg font-semibold text-white mb-4">Warehouse Utilization</h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-400">Space Utilization</span>
+                        <span class="text-white font-semibold" id="utilization-rate">78.5%</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 78.5%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 class="text-lg font-semibold text-white mb-4">Picking Efficiency</h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-400">Accuracy Rate</span>
+                        <span class="text-white font-semibold" id="picking-efficiency">94.2%</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 94.2%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 class="text-lg font-semibold text-white mb-4">Delivery Performance</h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-400">On-Time Delivery</span>
+                        <span class="text-white font-semibold" id="delivery-performance">96.8%</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-purple-500 h-2 rounded-full transition-all duration-300" style="width: 96.8%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function syncData() {
+        try {
+            const response = await fetch('/api/sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Data synchronized successfully!');
+                location.reload();
+            } else {
+                alert('Sync failed: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Sync error:', error);
+            alert('Sync failed: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}
